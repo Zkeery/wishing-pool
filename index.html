@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>许愿池</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <style>
+      .x-scene {
+        --x-water-1: light-dark(#bfe3ea, #1d4a57);
+        --x-water-2: light-dark(#7fc4d2, #143a46);
+        --x-water-3: light-dark(#4f9fb3, #0c2a34);
+        --x-rim-1: light-dark(#eeeae3, #4a4844);
+        --x-rim-2: light-dark(#d6d0c5, #333230);
+        --x-gold-1: #f6d77a;
+        --x-gold-2: #d9a63a;
+        --x-gold-3: #a8781c;
+        --x-ripple: light-dark(rgba(255, 255, 255, 0.7), rgba(220, 240, 245, 0.35));
+        max-width: 560px;
+        margin: 0 auto;
+        overflow-x: clip;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 40px var(--gutter) 64px;
+        display: grid;
+        gap: 28px;
+        justify-items: center;
+        text-align: center;
+      }
+      .x-title { display: grid; gap: 6px; }
+      .x-title h1 { font: var(--type-display); color: var(--text-primary); margin: 0; letter-spacing: 0.08em; }
+      .x-title .x-sub { font: var(--type-body); color: var(--text-primary); margin: 0; }
+      .x-title .x-date { font: var(--type-label); color: var(--text-secondary); margin: 0; }
+
+      .x-pool { position: relative; width: min(100%, 380px); aspect-ratio: 1; }
+      .x-pool svg { display: block; width: 100%; height: 100%; overflow: visible; }
+      .x-ripple { fill: none; stroke: var(--x-ripple); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: x-ripple 7s var(--ease-out) infinite; opacity: 0; }
+      .x-ripple:nth-of-type(2) { animation-delay: 2.3s; }
+      .x-ripple:nth-of-type(3) { animation-delay: 4.6s; }
+      @keyframes x-ripple { 0% { transform: scale(0.15); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
+      .x-shimmer { animation: x-shimmer 9s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+      @keyframes x-shimmer { from { transform: translate(-6px, -4px) rotate(-4deg); opacity: 0.35; } to { transform: translate(8px, 6px) rotate(5deg); opacity: 0.7; } }
+      .x-coins .x-coin-new { animation: x-sink 1.4s var(--ease-out) both; }
+      @keyframes x-sink { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+      .x-splash { fill: none; stroke: var(--x-ripple); stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: x-splash 1.8s var(--ease-out) forwards; }
+      .x-splash.x-late { animation-delay: 0.35s; opacity: 0; }
+      @keyframes x-splash { 0% { transform: scale(0.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+      .x-drop { fill: var(--x-ripple); animation: x-drop 0.9s var(--ease-out) forwards; }
+      @keyframes x-drop { 0% { transform: translate(0, 0); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+
+      .x-flycoin { position: absolute; left: 0; top: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; pointer-events: none;
+        background: radial-gradient(circle at 35% 30%, #fff3c4 0 12%, var(--x-gold-1) 30%, var(--x-gold-2) 70%, var(--x-gold-3) 100%);
+        box-shadow: inset 0 0 0 2px rgba(168, 120, 28, 0.55), 0 4px 10px rgba(0, 0, 0, 0.18); }
+      .x-floatwish { position: absolute; left: 50%; top: 50%; max-width: 70%; transform: translate(-50%, -50%); pointer-events: none;
+        font: var(--type-label); color: light-dark(#0f3f4c, #e4f4f7); text-shadow: 0 1px 8px rgba(255, 255, 255, 0.5); overflow-wrap: anywhere; }
+
+      .x-form { width: 100%; display: flex; gap: 8px; }
+      .x-input { flex: 1; min-width: 0; min-height: var(--tap); padding: 0 16px; border-radius: var(--r-s); border: 1px solid var(--stroke-primary);
+        background: var(--fill-primary-on); color: var(--text-primary); font: var(--type-body); }
+      .x-input::placeholder { color: var(--text-secondary); }
+      .x-input:focus-visible, .x-submit:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+      .x-submit { min-height: var(--tap); padding: 0 18px; border-radius: var(--r-s); border: 0; background: var(--fill-primary); color: var(--text-primary-on);
+        font: var(--type-label); cursor: pointer; white-space: nowrap; transition: opacity var(--dur-quick) ease; }
+      .x-submit:disabled { opacity: 0.4; cursor: default; }
+      .x-blessing { width: 100%; text-align: left; }
+      .x-blessing[hidden] { display: none; }
+      .x-show { animation: x-show 0.6s var(--ease-out) both; }
+      @keyframes x-show { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      .x-log { width: 100%; text-align: left; display: grid; gap: 12px; }
+      .x-log h2 { font: var(--type-heading); color: var(--text-primary); margin: 0; }
+      .x-empty { font: var(--type-small); color: var(--text-secondary); margin: 0; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .x-ripple, .x-shimmer, .x-coins .x-coin-new, .x-splash, .x-drop, .x-show { animation: none !important; }
+        .x-ripple { opacity: 0.4; }
+        .x-ripple:nth-of-type(1) { transform: scale(0.4); }
+        .x-ripple:nth-of-type(2) { transform: scale(0.7); }
+        .x-ripple:nth-of-type(3) { transform: scale(0.95); }
+        .x-splash, .x-drop { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <main class="main">
+        <div class="x-scene">
+          <div class="x-title">
+            <h1>许愿池</h1>
+            <p class="x-sub">今天，也许个愿吧。</p>
+            <p class="x-date" id="today"></p>
+          </div>
+
+          <div class="x-pool" id="pool">
+            <svg viewBox="0 0 300 300" role="img" aria-label="一座圆形的许愿池，水面泛着涟漪，池底躺着几枚金币">
+              <defs>
+                <radialGradient id="g-water" cx="45%" cy="40%" r="65%">
+                  <stop offset="0" stop-color="var(--x-water-1)" />
+                  <stop offset="0.6" stop-color="var(--x-water-2)" />
+                  <stop offset="1" stop-color="var(--x-water-3)" />
+                </radialGradient>
+                <linearGradient id="g-rim" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="var(--x-rim-1)" />
+                  <stop offset="1" stop-color="var(--x-rim-2)" />
+                </linearGradient>
+                <radialGradient id="g-coin" cx="35%" cy="30%" r="75%">
+                  <stop offset="0" stop-color="#fff3c4" />
+                  <stop offset="0.35" stop-color="var(--x-gold-1)" />
+                  <stop offset="0.8" stop-color="var(--x-gold-2)" />
+                  <stop offset="1" stop-color="var(--x-gold-3)" />
+                </radialGradient>
+                <radialGradient id="g-shine" cx="50%" cy="50%" r="50%">
+                  <stop offset="0" stop-color="#ffffff" stop-opacity="0.75" />
+                  <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+                </radialGradient>
+                <clipPath id="c-water"><circle cx="150" cy="150" r="118" /></clipPath>
+                <symbol id="coin" viewBox="-12 -12 24 24" overflow="visible">
+                  <circle r="11" fill="url(#g-coin)" />
+                  <circle r="7.5" fill="none" stroke="#a8781c" stroke-opacity="0.5" stroke-width="1" />
+                  <rect x="-2" y="-2" width="4" height="4" fill="#a8781c" fill-opacity="0.45" transform="rotate(45)" />
+                </symbol>
+              </defs>
+              <circle cx="150" cy="150" r="140" fill="url(#g-rim)" />
+              <circle cx="150" cy="150" r="140" fill="none" stroke="var(--stroke-primary)" />
+              <circle cx="150" cy="150" r="121" fill="none" stroke="var(--x-rim-2)" stroke-width="5" />
+              <circle cx="150" cy="150" r="118" fill="url(#g-water)" />
+              <g clip-path="url(#c-water)">
+                <g class="x-coins" id="coins" opacity="0.88">
+                  <use href="#coin" x="108" y="168" width="22" height="22" transform="rotate(-12 119 179)" />
+                  <use href="#coin" x="168" y="120" width="20" height="20" />
+                  <use href="#coin" x="176" y="190" width="22" height="22" transform="rotate(20 187 201)" />
+                  <use href="#coin" x="92" y="112" width="18" height="18" />
+                  <use href="#coin" x="140" y="212" width="18" height="18" />
+                </g>
+                <g id="waterfx">
+                  <circle class="x-ripple" cx="150" cy="150" r="110" />
+                  <circle class="x-ripple" cx="150" cy="150" r="110" />
+                  <circle class="x-ripple" cx="150" cy="150" r="110" />
+                </g>
+                <ellipse class="x-shimmer" cx="112" cy="98" rx="58" ry="20" fill="url(#g-shine)" transform="rotate(-25 112 98)" />
+                <ellipse class="x-shimmer" cx="196" cy="214" rx="30" ry="9" fill="url(#g-shine)" style="animation-delay: -4s" />
+                <circle cx="150" cy="150" r="118" fill="none" stroke="#000" stroke-opacity="0.12" stroke-width="10" />
+              </g>
+            </svg>
+          </div>
+
+          <form class="x-form" id="wishForm" autocomplete="off">
+            <input class="x-input" id="wish" type="text" aria-label="今天的愿望" maxlength="60" placeholder="写下你今天的愿望…" />
+            <button class="x-submit" id="wishBtn" type="submit" disabled>投币许愿</button>
+          </form>
+
+          <aside class="callout x-blessing" id="blessing" aria-live="polite" hidden>
+            <p class="callout__head"><span class="hark-mark" data-size="16"></span> 给小龙兰</p>
+            <p class="callout__lead"><strong id="blessingText"></strong></p>
+          </aside>
+
+          <div class="x-log">
+            <h2>今天投下的愿望</h2>
+            <p class="x-empty" id="logEmpty">还没有愿望，投下第一枚硬币吧。</p>
+            <ul class="checklist" id="log"></ul>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script src="hark.js"></script>
+    <script>
+      (function () {
+        var NS = "http://www.w3.org/2000/svg";
+        var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+        var blessings = [
+          "愿望已收到，好运正在路上。",
+          "认真生活的人，运气不会差。",
+          "今天的你，值得被温柔对待。",
+          "慢慢来，想要的都会来。",
+          "好事正在发生。",
+          "你的心愿，池水替你记住了。",
+          "愿你今天有一件小事让你笑出来。",
+          "所有的努力，都在悄悄发光。",
+          "别着急，花会开，风会来。",
+          "愿你被这个世界温柔以待。",
+          "今天也是被好运偏爱的一天。",
+          "心里有光的人，走到哪里都亮。"
+        ];
+        var lastBlessing = -1;
+
+        var d = new Date();
+        var week = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        document.getElementById("today").textContent =
+          d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日 " + week[d.getDay()];
+
+        var form = document.getElementById("wishForm");
+        var input = document.getElementById("wish");
+        var btn = document.getElementById("wishBtn");
+        var pool = document.getElementById("pool");
+        var coins = document.getElementById("coins");
+        var fx = document.getElementById("waterfx");
+        var card = document.getElementById("blessing");
+        var cardText = document.getElementById("blessingText");
+        var log = document.getElementById("log");
+        var logEmpty = document.getElementById("logEmpty");
+        var busy = false;
+
+        input.addEventListener("input", function () { btn.disabled = busy || !input.value.trim(); });
+
+        function svgEl(tag, attrs) {
+          var el = document.createElementNS(NS, tag);
+          for (var k in attrs) el.setAttribute(k, attrs[k]);
+          return el;
+        }
+        function spot() {
+          var a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 80;
+          return { x: 150 + Math.cos(a) * r, y: 150 + Math.sin(a) * r };
+        }
+        function placeCoin(p) {
+          var s = 18 + Math.random() * 4, rot = Math.round(Math.random() * 60 - 30);
+          var u = svgEl("use", { href: "#coin", x: p.x - s / 2, y: p.y - s / 2, width: s, height: s, transform: "rotate(" + rot + " " + p.x + " " + p.y + ")" });
+          var g = svgEl("g", { class: "x-coin-new" });
+          g.appendChild(u);
+          coins.appendChild(g);
+        }
+        function splash(p) {
+          [["", 46], ["x-late", 70]].forEach(function (c) {
+            var ring = svgEl("circle", { class: "x-splash " + c[0], cx: p.x, cy: p.y, r: c[1] });
+            fx.appendChild(ring);
+            setTimeout(function () { ring.remove(); }, 2400);
+          });
+          for (var i = 0; i < 7; i++) {
+            var a = (i / 7) * Math.PI * 2 + Math.random() * 0.5;
+            var drop = svgEl("circle", { class: "x-drop", cx: p.x, cy: p.y, r: 1.6 + Math.random() });
+            drop.style.setProperty("--dx", (Math.cos(a) * 16).toFixed(1) + "px");
+            drop.style.setProperty("--dy", (Math.sin(a) * 16 - 6).toFixed(1) + "px");
+            fx.appendChild(drop);
+            (function (el) { setTimeout(function () { el.remove(); }, 1000); })(drop);
+          }
+        }
+        function floatWish(text) {
+          var el = document.createElement("div");
+          el.className = "x-floatwish";
+          el.textContent = text;
+          pool.appendChild(el);
+          el.animate(
+            [
+              { opacity: 0, transform: "translate(-50%, -20%) scale(0.96)", filter: "blur(0)" },
+              { opacity: 1, transform: "translate(-50%, -70%) scale(1)", filter: "blur(0)", offset: 0.3 },
+              { opacity: 0, transform: "translate(-50%, -40%) scale(0.92)", filter: "blur(3px)" }
+            ],
+            { duration: 3000, easing: "ease-in-out", fill: "forwards" }
+          ).onfinish = function () { el.remove(); };
+        }
+        function flyCoin(p, done) {
+          var w = pool.clientWidth, k = w / 300;
+          var x0 = w * 0.5, y0 = w * 1.12, x1 = p.x * k, y1 = p.y * k, h = w * 0.55;
+          var el = document.createElement("div");
+          el.className = "x-flycoin";
+          pool.appendChild(el);
+          var frames = [];
+          for (var i = 0; i <= 12; i++) {
+            var t = i / 12;
+            var x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t - 4 * h * t * (1 - t);
+            var s = 1.15 - 0.5 * t;
+            frames.push({ transform: "translate(" + x + "px," + y + "px) scale(" + s + ") rotateY(" + t * 720 + "deg)", opacity: t > 0.92 ? 0.4 : 1 });
+          }
+          el.animate(frames, { duration: 1100, easing: "cubic-bezier(.3,.1,.6,1)", fill: "forwards" }).onfinish = function () {
+            el.remove();
+            done();
+          };
+        }
+        function pad(n) { return n < 10 ? "0" + n : "" + n; }
+        function addLog(text) {
+          var now = new Date();
+          var li = document.createElement("li");
+          var item = document.createElement("span");
+          item.className = "checklist__item";
+          item.textContent = text;
+          var note = document.createElement("span");
+          note.className = "checklist__note";
+          note.textContent = pad(now.getHours()) + ":" + pad(now.getMinutes());
+          li.appendChild(item);
+          li.appendChild(note);
+          log.insertBefore(li, log.firstChild);
+          logEmpty.hidden = true;
+        }
+        function bless() {
+          var i;
+          do { i = Math.floor(Math.random() * blessings.length); } while (i === lastBlessing);
+          lastBlessing = i;
+          cardText.textContent = blessings[i];
+          card.hidden = false;
+          card.classList.remove("x-show");
+          void card.offsetWidth;
+          card.classList.add("x-show");
+        }
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var text = input.value.trim();
+          if (!text || busy) return;
+          input.value = "";
+          btn.disabled = true;
+          addLog(text);
+          var p = spot();
+          if (reduce.matches) {
+            placeCoin(p);
+            bless();
+            return;
+          }
+          busy = true;
+          flyCoin(p, function () {
+            splash(p);
+            placeCoin(p);
+            floatWish(text);
+            setTimeout(function () {
+              bless();
+              busy = false;
+              btn.disabled = !input.value.trim();
+            }, 1400);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
